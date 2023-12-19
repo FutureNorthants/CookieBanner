@@ -19,6 +19,7 @@
     margin: 0 auto;
     font-family: Arial, Helvetica, sans-serif;
     font-size: 1rem;
+    box-sizing: border-box;
   }
   .wnc-cookie-title {
     font-weight: bold;
@@ -65,9 +66,6 @@
     background-color: #e2ca76;
     color: black;
   }
-  [x-cloak] {
-    display: none !important;
-  }
 </style>
 
 <script>
@@ -76,56 +74,65 @@
     dataLayer.push(arguments);
   }
 
-  if (localStorage.getItem("wncCookieConsentMode") === null) {
-    gtag("consent", "default", {
-      ad_storage: "denied",
-      analytics_storage: "denied",
-      personalization_storage: "denied",
-      functionality_storage: "denied",
-      security_storage: "denied",
-    });
-  } else {
-    gtag(
-      "consent",
-      "default",
-      JSON.parse(localStorage.getItem("wncCookieConsentMode"))
-    );
-  }
+  window.onload = () => {
+    const cookieBanner = document.getElementById("wncCookieBanner");
+    if (localStorage.getItem("wncCookieConsentMode") === null) {
+      cookieBanner.classList.remove("wnc-cookie-hidden");
+      cookieBanner.classList.add("wnc-cookie-show");
+    }
+
+    if (localStorage.getItem("wncCookieConsentMode") === null) {
+      gtag("consent", "default", {
+        ad_storage: "denied",
+        analytics_storage: "denied",
+        personalization_storage: "denied",
+        functionality_storage: "denied",
+        security_storage: "denied",
+      });
+    } else {
+      gtag(
+        "consent",
+        "default",
+        JSON.parse(localStorage.getItem("wncCookieConsentMode"))
+      );
+    }
+
+    gtag("js", new Date());
+    gtag("config", "GOOGLE_ANALYTICS_ID");
+  };
 </script>
+
 <!-- Google tag (gtag.js) -->
 <script
   async
   src="https://www.googletagmanager.com/gtag/js?id=GOOGLE_ANALYTICS_ID"
 ></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag() {
-    dataLayer.push(arguments);
-  }
-  gtag("js", new Date());
 
-  gtag("config", "GOOGLE_ANALYTICS_ID");
+<script>
+  function updateCookies(consent) {
+    const cookieBanner = document.getElementById("wncCookieBanner");
+    cookieBanner.classList.remove("wnc-cookie-show");
+    cookieBanner.classList.add("wnc-cookie-hidden");
+    setConsent(consent);
+  }
+
+  function setConsent(consent) {
+    const wncCookieConsentMode = {
+      functionality_storage: consent ? "granted" : "denied",
+      security_storage: consent ? "granted" : "denied",
+      ad_storage: "denied",
+      analytics_storage: consent ? "granted" : "denied",
+      personalization: "denied",
+    };
+    gtag("consent", "update", wncCookieConsentMode);
+    localStorage.setItem(
+      "wncCookieConsentMode",
+      JSON.stringify(wncCookieConsentMode)
+    );
+  }
 </script>
 
-<div
-  class="wnc-cookie-banner"
-  x-cloak
-  x-data="{hide_banner: true, 
-        setConsent(consent) {
-          const wncCookieConsentMode = {
-            'functionality_storage':  consent ? 'granted' : 'denied',
-            'security_storage':  consent ? 'granted' : 'denied',
-            'ad_storage': 'denied',
-            'analytics_storage': consent ? 'granted' : 'denied',
-            'personalization': 'denied',
-          };
-          gtag('consent', 'update', consent);  
-          localStorage.setItem('wncCookieConsentMode', JSON.stringify(wncCookieConsentMode));
-        }
-      }"
-  x-init="hide_banner = localStorage.getItem('wncCookieConsentMode') !== null"
-  x-bind:class="{ 'wnc-cookie-hidden': hide_banner, 'wnc-cookie-show': !hide_banner }"
->
+<div class="wnc-cookie-banner wnc-cookie-hidden" id="wncCookieBanner">
   <div class="wnc-cookie-banner-container">
     <p class="wnc-cookie-title">
       We use cookies on this site to enhance your user experience
@@ -138,22 +145,15 @@
 
     <div class="wnc-cookie-buttons">
       <div>
-        <button
-          class="wnc-cookie-button"
-          @click="hide_banner = true; setConsent(true);"
-        >
+        <button class="wnc-cookie-button" onclick="updateCookies(true)">
           Accept all cookies
         </button>
       </div>
       <div>
-        <button
-          class="wnc-cookie-button"
-          @click="hide_banner = true; setConsent(false);"
-        >
+        <button class="wnc-cookie-button" onclick="updateCookies(false)">
           Reject all cookies
         </button>
       </div>
     </div>
   </div>
 </div>
-<script src="//unpkg.com/alpinejs" defer></script>
